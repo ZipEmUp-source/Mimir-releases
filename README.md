@@ -26,7 +26,13 @@ xattr -cr /Applications/Mimir.app
 
 ## How updates reach you
 
-Mimir checks this repository for a newer published release a few seconds after it starts and every six hours after that. When one is out, a gold **v0.x.y ready** pill appears in the status bar, and the **Tidings** tab in Settings shows the release notes with a download link for your platform. Nothing installs on its own: download, quit Mimir, run the installer.
+Mimir checks this repository for a newer published release a few seconds after it starts and every six hours after that. When one is out, a gold **v0.x.y ready** pill appears in the status bar, and the **Tidings** tab in Settings shows the release notes. Nothing installs on its own; you decide.
+
+**One-click install (v0.16.0 and later).** If you installed Mimir with the installer, the Tidings tab offers an **Install** button: Mimir downloads the update, checks it against the signing key built into the app, installs it, and restarts. Your sessions and settings stay where they are. Every update package is signed by the maintainer, and Mimir refuses any download that signature does not verify.
+
+**Coming from v0.15.0 or earlier?** Those versions have no installer built in, so update by hand one last time: download the file for your platform from the latest release, quit Mimir, and run it. From then on, updates are one click. On a Mac, keep Mimir in **Applications**; an app still running from its disk image cannot replace itself.
+
+The files ending in `.sig` and the `latest.json` on each release are what the in-app installer reads. You do not need to download them.
 
 ## Reporting a problem
 
