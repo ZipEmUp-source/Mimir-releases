@@ -5,7 +5,7 @@ name: Mac Rust tests
 # dialog. The private source is checked out at any ref, like the other
 # workflows here, on a free public runner. Dispatch only:
 #
-#   gh workflow run mac-rust-tests.yml -R ZipEmUp-source/Mimir-releases -f ref=ward-security
+#   gh workflow run mac-rust-tests.yml -R ZipEmUp-source/Mimir-releases -f ref=well-core
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ on:
       ref:
         description: 'Branch or tag of ZipEmUp-source/Mimir to test'
         required: true
-        default: ward-security
+        default: well-core
         type: string
 
 jobs:
