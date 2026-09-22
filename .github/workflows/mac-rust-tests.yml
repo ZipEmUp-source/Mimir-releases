@@ -1,0 +1,72 @@
+name: Mac Rust tests
+
+# Run Mimir's Rust unit tests on a real Mac, for what only a Mac can prove:
+# the Ward's login-Keychain credential store and its AppleScript approval
+# dialog. The private source is checked out at any ref, like the other
+# workflows here, on a free public runner. Dispatch only:
+#
+#   gh workflow run mac-rust-tests.yml -R ZipEmUp-source/Mimir-releases -f ref=ward-security
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or tag of ZipEmUp-source/Mimir to test'
+        required: true
+        default: ward-security
+        type: string
+
+jobs:
+  test:
+    name: cargo test on macOS
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out the private source
+        uses: actions/checkout@v4
+        with:
+          repository: ZipEmUp-source/Mimir
+          ref: ${{ inputs.ref }}
+          ssh-key: ${{ secrets.SOURCE_DEPLOY_KEY }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            well-runtime/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+
+      # The Rust crate embeds the built frontend and the Node sidecar at
+      # compile time, so both must exist before cargo test.
+      - name: Frontend and embedded Well runtime
+        run: |
+          npm run build
+          npm run desktop:runtime -- --target aarch64-apple-darwin
+
+      # A throwaway, unlocked default keychain: the Keychain test writes to
+      # the default keychain, and this keeps it off the runner's login one.
+      - name: A throwaway keychain for the Keychain test
+        run: |
+          KC="$RUNNER_TEMP/mimir-test.keychain-db"
+          security create-keychain -p mimir-test "$KC"
+          security set-keychain-settings "$KC"
+          security unlock-keychain -p mimir-test "$KC"
+          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+          security default-keychain -d user -s "$KC"
+
+      - name: Unit tests
+        working-directory: src-tauri
+        run: cargo test --lib
+
+      - name: The live approval dialog, which must deny when nobody answers
+        working-directory: src-tauri
+        run: cargo test --lib -- --ignored mac_dialog_runs
