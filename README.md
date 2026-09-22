@@ -18,6 +18,10 @@ SmartScreen may say "Windows protected your PC" because the installer is not yet
 
 ### macOS
 
+Open the `.dmg`, drag **Mimir** onto the **Applications** folder, eject the disk image, and open Mimir from **Applications** (or Launchpad, or Spotlight). Always run it from there. A Mimir opened straight from its disk image cannot update itself, so the one-click **Install** button never appears, and macOS may run a copy left in **Downloads** from a temporary location with the same result.
+
+Already using Mimir from the disk image or from Downloads? Quit it, drag it into **Applications**, and open it from there. Your sessions, settings and keys come with you: they live in your user account, not inside the app.
+
 From v0.17.0 the Mac builds are signed with a Developer ID certificate and notarized by Apple, so Mimir opens like any other app: no warning, nothing to allow.
 
 Versions before v0.17.0 were unsigned. If you still have one of those, Gatekeeper refuses to open it the first time: open **System Settings → Privacy & Security**, scroll to the notice about Mimir, and choose **Open Anyway** (on macOS 15 Sequoia this is the route that works; on older versions right-click → **Open** also does). If macOS calls the app "damaged", clear the quarantine flag once:
@@ -32,9 +36,9 @@ Or simply download the latest release and skip all of that.
 
 Mimir checks this repository for a newer published release a few seconds after it starts and every six hours after that. When one is out, a gold **v0.x.y ready** pill appears in the status bar, and the **Tidings** tab in Settings shows the release notes. Nothing installs on its own; you decide.
 
-**One-click install (v0.16.0 and later).** If you installed Mimir with the installer, the Tidings tab offers an **Install** button: Mimir downloads the update, checks it against the signing key built into the app, installs it, and restarts. Your sessions and settings stay where they are. Every update package is signed by the maintainer, and Mimir refuses any download that signature does not verify.
+**One-click install (v0.16.0 and later).** If you installed Mimir — with the Windows installer, or on a Mac by dragging it into **Applications** — the Tidings tab offers an **Install** button: Mimir downloads the update, checks it against the signing key built into the app, installs it, and restarts. Your sessions and settings stay where they are. Every update package is signed by the maintainer, and Mimir refuses any download that signature does not verify.
 
-**Coming from v0.15.0 or earlier?** Those versions have no installer built in, so update by hand one last time: download the file for your platform from the latest release, quit Mimir, and run it. From then on, updates are one click. On a Mac, keep Mimir in **Applications**; an app still running from its disk image cannot replace itself.
+**Coming from v0.15.0 or earlier?** Those versions have no installer built in, so update by hand one last time: download the file for your platform from the latest release, quit Mimir, and run it. From then on, updates are one click. On a Mac, drag the new Mimir into **Applications** and replace the old one ([see macOS](#macos)).
 
 The files ending in `.sig` and the `latest.json` on each release are what the in-app installer reads. You do not need to download them.
 
