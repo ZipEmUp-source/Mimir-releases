@@ -1,0 +1,43 @@
+name: CI
+
+# Typecheck, bundle and test any branch or tag of Mimir's PRIVATE source, on a
+# free Linux runner here, because the private repository's own Actions
+# minutes ran out the day macOS notarization arrived. Run it before tagging a
+# release:
+#
+#   gh workflow run ci.yml -R ZipEmUp-source/Mimir-releases -f ref=well-core
+#
+# The Rust side is compiled for real on Windows and macOS by the Release
+# workflow, so this one stays cheap and quick.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or tag of ZipEmUp-source/Mimir to check'
+        required: true
+        default: well-core
+        type: string
+
+jobs:
+  frontend:
+    name: Typecheck, build and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the private source
+        uses: actions/checkout@v4
+        with:
+          repository: ZipEmUp-source/Mimir
+          ref: ${{ inputs.ref }}
+          ssh-key: ${{ secrets.SOURCE_DEPLOY_KEY }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            well-runtime/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npm run well:verify

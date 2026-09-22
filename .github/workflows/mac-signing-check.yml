@@ -1,0 +1,175 @@
+name: Mac signing check
+
+# Does the Apple setup produce a Mac app that Gatekeeper accepts, and does the
+# Node bundled inside it still run? Answered on a real Mac runner, on any
+# branch or tag of the PRIVATE source, WITHOUT cutting a release. Runs here,
+# in the public repository, because its Actions minutes are free.
+#
+#   gh workflow run mac-signing-check.yml -R ZipEmUp-source/Mimir-releases -f ref=well-core
+#
+# Notarization requires the hardened runtime, the hardened runtime stops V8's
+# JIT, and Mimir's lanes all run on the Node sidecar at Contents/MacOS/node.
+# The source's src-tauri/Entitlements.plist gives it back what it needs; this
+# job proves that by running that very binary out of the signed bundle.
+# Re-run it after every change to the Apple secrets or the entitlements.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or tag of ZipEmUp-source/Mimir to check'
+        required: true
+        default: well-core
+        type: string
+
+jobs:
+  gate:
+    name: Are the Apple secrets here yet?
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.look.outputs.ready }}
+    steps:
+      - id: look
+        env:
+          HAS_DEPLOY_KEY: ${{ secrets.SOURCE_DEPLOY_KEY != '' }}
+          HAS_CERT: ${{ secrets.APPLE_CERTIFICATE != '' && secrets.APPLE_CERTIFICATE_PASSWORD != '' }}
+          HAS_API: ${{ secrets.APPLE_API_ISSUER != '' && secrets.APPLE_API_KEY != '' && secrets.APPLE_API_KEY_P8 != '' }}
+          HAS_ID: ${{ secrets.APPLE_ID != '' && secrets.APPLE_PASSWORD != '' && secrets.APPLE_TEAM_ID != '' }}
+          HAS_UPDATER_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' && secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD != '' }}
+        run: |
+          echo "deploy key for the source:    $HAS_DEPLOY_KEY"
+          echo "Apple certificate + password: $HAS_CERT"
+          echo "notarization via API key:     $HAS_API"
+          echo "notarization via Apple ID:    $HAS_ID"
+          echo "update-signing key:           $HAS_UPDATER_KEY"
+          if [ "$HAS_DEPLOY_KEY" != "true" ]; then
+            echo "::error::SOURCE_DEPLOY_KEY is not set; the source cannot be checked out."
+            exit 1
+          fi
+          if [ "$HAS_CERT" != "true" ]; then
+            echo "::notice::No Apple certificate yet, so there is nothing to check and no Mac build was started."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$HAS_UPDATER_KEY" != "true" ]; then
+            echo "::error::The update-signing secrets are missing; a bundled build cannot finish without them."
+            exit 1
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+  mac:
+    name: Build, sign, notarize and interrogate the app
+    needs: gate
+    if: needs.gate.outputs.ready == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 120
+    steps:
+      - name: Check out the private source
+        uses: actions/checkout@v4
+        with:
+          repository: ZipEmUp-source/Mimir
+          ref: ${{ inputs.ref }}
+          ssh-key: ${{ secrets.SOURCE_DEPLOY_KEY }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            well-runtime/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+
+      - name: Prepare embedded Well runtime
+        run: npm run desktop:runtime -- --target aarch64-apple-darwin
+
+      - name: Apple signing and notarization
+        shell: bash
+        env:
+          CERT: ${{ secrets.APPLE_CERTIFICATE }}
+          CERT_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          API_KEY: ${{ secrets.APPLE_API_KEY }}
+          API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          AID: ${{ secrets.APPLE_ID }}
+          APW: ${{ secrets.APPLE_PASSWORD }}
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+        run: bash scripts/ci-apple-env.sh
+
+      - name: Apple accepts the notarization credentials
+        shell: bash
+        run: bash scripts/ci-apple-verify.sh
+
+      - name: Build the app and the disk image
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: npx tauri build --target aarch64-apple-darwin --bundles app,dmg
+
+      - name: Interrogate the result
+        shell: bash
+        run: |
+          set -uo pipefail
+          BUNDLE=src-tauri/target/aarch64-apple-darwin/release/bundle
+          APP="$BUNDLE/macos/Mimir.app"
+          NODE="$APP/Contents/MacOS/node"
+          DMG=$(ls "$BUNDLE"/dmg/*.dmg | head -1)
+          fail=0
+          say() { printf '\n== %s ==\n' "$1"; }
+
+          say "1. Is every piece of the bundle validly signed, inside out?"
+          codesign --verify --deep --strict --verbose=2 "$APP" || { echo "::error::codesign rejects the app bundle."; fail=1; }
+
+          say "2. Is the hardened runtime on?"
+          codesign -dv "$APP" 2>&1 | grep -q "flags=.*runtime" \
+            && echo "hardened runtime: on" \
+            || { echo "::error::The app is not signed with the hardened runtime; Apple will not notarize it."; fail=1; }
+
+          say "3. The Node sidecar: signed with the runtime AND the JIT entitlements?"
+          codesign -d --entitlements - "$NODE" 2>/dev/null | grep -q "com.apple.security.cs.allow-jit" \
+            && echo "allow-jit: present on the sidecar" \
+            || { echo "::error::The Node sidecar lacks com.apple.security.cs.allow-jit. It will die on startup on a user's Mac."; fail=1; }
+          if codesign -d --entitlements - "$NODE" 2>/dev/null | grep -q "get-task-allow"; then
+            echo "::error::The sidecar carries get-task-allow, which the notary service rejects."; fail=1
+          fi
+
+          say "4. Does that Node actually run, JIT and all, from inside the signed bundle?"
+          if "$NODE" -e "let s=0; for (let i=0;i<2e7;i++) s+=i%7; const f=new Function('a','b','return a*b'); console.log('node', process.version, 'ran; loop', s, 'jit-compiled fn', f(6,7))"; then
+            echo "sidecar: alive under the hardened runtime"
+          else
+            echo "::error::The bundled Node does not run under the hardened runtime. Every lane would be dead on a Mac. Check src-tauri/Entitlements.plist."; fail=1
+          fi
+
+          if [ "${MIMIR_NOTARIZING:-false}" = "true" ]; then
+            say "5. Is the notarization ticket stapled to the app?"
+            xcrun stapler validate "$APP" || { echo "::error::No valid notarization ticket is stapled to the app."; fail=1; }
+
+            say "6. What does Gatekeeper say, exactly as it would on a user's Mac?"
+            spctl -a -t exec -vv "$APP" 2>&1 | tee /tmp/spctl-app.txt
+            grep -q "accepted" /tmp/spctl-app.txt && grep -q "Notarized Developer ID" /tmp/spctl-app.txt \
+              || { echo "::error::Gatekeeper does not accept the app as a notarized Developer ID app."; fail=1; }
+          else
+            say "5-6. Notarization"
+            echo "::warning::No notarization secrets, so the app is signed but NOT notarized. Gatekeeper's verdict, for the record:"
+            spctl -a -t exec -vv "$APP" 2>&1 || true
+          fi
+
+          say "7. The disk image people actually download"
+          codesign --verify --verbose=2 "$DMG" && echo "dmg signature: valid" || { echo "::error::The disk image is not validly signed."; fail=1; }
+
+          say "Verdict"
+          if [ "$fail" -eq 0 ]; then
+            echo "The Mac build is signed${MIMIR_NOTARIZING:+ and, where secrets allow, notarized}, and its Node sidecar runs. Safe to cut a release."
+          else
+            echo "::error::The Mac build is NOT ready. See the numbered answers above."
+          fi
+          exit "$fail"

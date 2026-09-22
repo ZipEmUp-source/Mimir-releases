@@ -1,0 +1,201 @@
+name: Release
+
+# Builds one tagged version of Mimir's PRIVATE source and attaches the
+# installers to a draft release in THIS repository. Public repositories get
+# unlimited free Actions minutes; the private one does not, and macOS runners
+# bill ten times over there — which is why the builds live here. Nothing of
+# the source is published: the runner checks it out with a read-only deploy
+# key, builds, uploads the installers, and is destroyed.
+#
+#   gh workflow run release.yml -R ZipEmUp-source/Mimir-releases -f tag=v0.17.0
+#
+# The tag must already exist in ZipEmUp-source/Mimir. Review the draft here,
+# then Publish: that is the moment every installed Mimir's Tidings check sees
+# the new version. Logs are public: they show compiler output and file paths,
+# never the source, and GitHub masks every secret value.
+#
+# Secrets on this repository:
+#   SOURCE_DEPLOY_KEY — read-only deploy key registered on the source repo.
+#   TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD — sign the
+#     update packages; installed Mimirs verify against the public key in the
+#     source's tauri.conf.json. Never regenerate.
+#   APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD — Developer ID signing.
+#   APPLE_ID, APPLE_PASSWORD (app-specific), APPLE_TEAM_ID — notarization;
+#     or APPLE_API_ISSUER, APPLE_API_KEY, APPLE_API_KEY_P8 instead.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag in ZipEmUp-source/Mimir to build, e.g. v0.17.0'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  # Seconds on a Linux runner, before any Mac minute: the tag is well formed,
+  # every secret a build needs exists, the deploy key really reaches the
+  # source at that tag, and the changelog has something to say about it.
+  preflight:
+    name: Secrets, deploy key and tag are in place
+    runs-on: ubuntu-latest
+    steps:
+      - name: Look before a Mac minute is spent
+        env:
+          TAG: ${{ inputs.tag }}
+          HAS_DEPLOY_KEY: ${{ secrets.SOURCE_DEPLOY_KEY != '' }}
+          HAS_SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+          HAS_SIGNING_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD != '' }}
+          HAS_APPLE_CERT: ${{ secrets.APPLE_CERTIFICATE != '' && secrets.APPLE_CERTIFICATE_PASSWORD != '' }}
+          HAS_APPLE_API: ${{ secrets.APPLE_API_ISSUER != '' && secrets.APPLE_API_KEY != '' && secrets.APPLE_API_KEY_P8 != '' }}
+          HAS_APPLE_ID: ${{ secrets.APPLE_ID != '' && secrets.APPLE_PASSWORD != '' }}
+          HAS_APPLE_TEAM: ${{ secrets.APPLE_TEAM_ID != '' }}
+        run: |
+          case "$TAG" in
+            v[0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "::error::The tag must look like v0.17.0, got '$TAG'."; exit 1 ;;
+          esac
+          if [ "$HAS_DEPLOY_KEY" != "true" ]; then
+            echo "::error::SOURCE_DEPLOY_KEY is not set on this repository, so the source cannot be checked out."
+            exit 1
+          fi
+          if [ "$HAS_SIGNING_KEY" != "true" ] || [ "$HAS_SIGNING_PASSWORD" != "true" ]; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY and TAURI_SIGNING_PRIVATE_KEY_PASSWORD must both be set here; a bundled build cannot finish without them."
+            exit 1
+          fi
+          if [ "$HAS_APPLE_CERT" != "true" ]; then
+            echo "::warning::Mac builds will be UNSIGNED: APPLE_CERTIFICATE / APPLE_CERTIFICATE_PASSWORD are not set. Gatekeeper will object on first open."
+          elif [ "$HAS_APPLE_API" = "true" ]; then
+            echo "::notice::Mac builds will be signed and notarized (App Store Connect API key)."
+          elif [ "$HAS_APPLE_ID" = "true" ] && [ "$HAS_APPLE_TEAM" = "true" ]; then
+            echo "::notice::Mac builds will be signed and notarized (Apple ID)."
+          elif [ "$HAS_APPLE_ID" = "true" ]; then
+            echo "::error::APPLE_ID and APPLE_PASSWORD are set but APPLE_TEAM_ID is not; the Mac builds would fail at the notarization step."
+            exit 1
+          else
+            echo "::warning::Mac builds will be signed but NOT notarized: set APPLE_ID + APPLE_PASSWORD + APPLE_TEAM_ID (or the APPLE_API_* trio)."
+          fi
+
+      - name: The deploy key reaches the source at that tag
+        uses: actions/checkout@v4
+        with:
+          repository: ZipEmUp-source/Mimir
+          ref: ${{ inputs.tag }}
+          ssh-key: ${{ secrets.SOURCE_DEPLOY_KEY }}
+          fetch-depth: 1
+
+      - name: The changelog has a section for it
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          title=$(node scripts/release-notes.mjs "$TAG" --title)
+          echo "release title: ${title:-(none; the body will say so)}"
+          node scripts/release-notes.mjs "$TAG" | head -3
+
+  build:
+    needs: preflight
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            args: ''
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+            args: '--target aarch64-apple-darwin'
+          - platform: macos-latest
+            target: x86_64-apple-darwin
+            args: '--target x86_64-apple-darwin'
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Check out the private source at the tag
+        uses: actions/checkout@v4
+        with:
+          repository: ZipEmUp-source/Mimir
+          ref: ${{ inputs.tag }}
+          ssh-key: ${{ secrets.SOURCE_DEPLOY_KEY }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            well-runtime/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+
+      - name: Prepare embedded Well runtime
+        run: npm run desktop:runtime -- --target ${{ matrix.target }}
+
+      - name: Verify embedded Well runtime
+        run: npm run desktop:runtime:verify
+
+      - name: Release notes from CHANGELOG.md
+        id: notes
+        shell: bash
+        run: |
+          {
+            echo "title=$(node scripts/release-notes.mjs "$TAG" --title)"
+            echo 'body<<MIMIR_NOTES_EOF'
+            node scripts/release-notes.mjs "$TAG"
+            echo 'MIMIR_NOTES_EOF'
+          } >> "$GITHUB_OUTPUT"
+        env:
+          TAG: ${{ inputs.tag }}
+
+      # The bundler signs when APPLE_CERTIFICATE and its password are SET, not
+      # when they are non-empty, and a missing secret arrives as an empty
+      # string; the script exports them only when they hold something.
+      - name: Apple signing and notarization, when the secrets exist
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          CERT: ${{ secrets.APPLE_CERTIFICATE }}
+          CERT_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          API_KEY: ${{ secrets.APPLE_API_KEY }}
+          API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          AID: ${{ secrets.APPLE_ID }}
+          APW: ${{ secrets.APPLE_PASSWORD }}
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+        run: bash scripts/ci-apple-env.sh
+
+      - name: Apple accepts the notarization credentials
+        if: runner.os == 'macOS'
+        shell: bash
+        run: bash scripts/ci-apple-verify.sh
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          # This repository's own token: the release is created right here.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # bundle.createUpdaterArtifacts signs each installer with this key;
+          # the .sig files and latest.json ride along on the release.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          # Both Windows installers are built; the in-app download button and
+          # the README point people at the NSIS one, so that is the package
+          # latest.json names for plain "windows-x86_64".
+          updaterJsonPreferNsis: true
+          # The tag lives in the source repo, not here; GitHub creates it here
+          # on publish, from this branch.
+          releaseCommitish: main
+          tagName: ${{ inputs.tag }}
+          releaseName: ${{ format('Mimir {0}{1}', inputs.tag, steps.notes.outputs.title != '' && format(' — {0}', steps.notes.outputs.title) || '') }}
+          releaseBody: ${{ steps.notes.outputs.body }}
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
