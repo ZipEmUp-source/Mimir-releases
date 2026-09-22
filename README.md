@@ -18,11 +18,15 @@ SmartScreen may say "Windows protected your PC" because the installer is not yet
 
 ### macOS
 
-The builds are not yet notarized with Apple, so Gatekeeper refuses to open Mimir the first time. Open **System Settings → Privacy & Security**, scroll to the notice about Mimir, and choose **Open Anyway** (on macOS 15 Sequoia this is the route that works; on older versions right-click → **Open** also does). If macOS calls the app "damaged", clear the quarantine flag once:
+From v0.17.0 the Mac builds are signed with a Developer ID certificate and notarized by Apple, so Mimir opens like any other app: no warning, nothing to allow.
+
+Versions before v0.17.0 were unsigned. If you still have one of those, Gatekeeper refuses to open it the first time: open **System Settings → Privacy & Security**, scroll to the notice about Mimir, and choose **Open Anyway** (on macOS 15 Sequoia this is the route that works; on older versions right-click → **Open** also does). If macOS calls the app "damaged", clear the quarantine flag once:
 
 ```
 xattr -cr /Applications/Mimir.app
 ```
+
+Or simply download the latest release and skip all of that.
 
 ## How updates reach you
 
