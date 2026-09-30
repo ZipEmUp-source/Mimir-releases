@@ -1,0 +1,100 @@
+name: Announce release
+
+# Tells Mimir's account service that a release is out. Every Mimir with an
+# account service asks it alongside GitHub, so it learns of the release even
+# when GitHub's API will not answer (sixty checks an hour per address), and
+# each person's computers can see which of them is behind. Source repo:
+# ACCOUNTS.md, "Your computers, and the current release".
+#
+# Runs when a release here is published (never for a pre-release), and only
+# ever announces the latest one. Run it by hand to announce it again, or with
+# a minimum version:
+#
+#   gh workflow run announce-release.yml -R ZipEmUp-source/Mimir-releases -f tag=v0.20.0
+#   gh workflow run announce-release.yml -R ZipEmUp-source/Mimir-releases -f tag=v0.21.0 -f min_version=0.18.0
+#
+# Secret:   MIMIR_RELEASE_TOKEN — made and set by `node scripts/release-token.mjs`
+#           in the source repo. The account service keeps only its SHA-256.
+# Variable: MIMIR_MIN_VERSION (optional) — the oldest version still fine to
+#           run; announced with every release until it is changed or deleted.
+#
+# The service address and its publishable key are public by design: every
+# Mimir carries them, and they reach nothing an account has not granted.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Published release to announce, e.g. v0.20.0'
+        required: true
+        type: string
+      min_version:
+        description: 'Oldest version still fine to run, e.g. 0.18.0 (empty: the MIMIR_MIN_VERSION variable, if any)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: announce-release
+  cancel-in-progress: false
+
+jobs:
+  announce:
+    name: Tell the account service
+    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    steps:
+      - name: Announce the release
+        env:
+          SERVICE_URL: https://ujeqidiltvghvhawbrag.supabase.co
+          SERVICE_KEY: sb_publishable_R2Ib-rShs2p7nxL2x5l76w_9eDawjed
+          TOKEN: ${{ secrets.MIMIR_RELEASE_TOKEN }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          MIN_VERSION: ${{ inputs.min_version || vars.MIMIR_MIN_VERSION }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ -z "$TOKEN" ]; then
+            echo "::error::MIMIR_RELEASE_TOKEN is not set on this repository: run 'node scripts/release-token.mjs' in the source repo."
+            exit 1
+          fi
+          case "$TAG" in
+            v[0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "::error::The tag must look like v0.20.0, got '$TAG'."; exit 1 ;;
+          esac
+          # Only the newest published release: a draft, a pre-release or an
+          # older release would point every Mimir at the wrong version.
+          latest=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)
+          if [ "$TAG" != "$latest" ]; then
+            echo "::error::$TAG is not this repository's latest published release ($latest); only that one is announced."
+            exit 1
+          fi
+          release=$(gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json name)
+          # "Mimir v0.20.0 — Ratatoskr" → "Ratatoskr", at most 60 characters.
+          title=$(jq -r '(.name // "") | split(" — ") | if length > 1 then .[1:] | join(" — ") else "" end | .[0:60]' <<<"$release")
+          echo "Announcing $TAG${title:+ “$title”}${MIN_VERSION:+, minimum $MIN_VERSION}"
+
+          jq -n --arg token "$TOKEN" --arg version "${TAG#v}" --arg title "$title" \
+                --arg url "https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG" --arg min "$MIN_VERSION" \
+            '{p_token: $token, p_channel: "stable", p_version: $version,
+              p_title: (if $title == "" then null else $title end), p_notes_url: $url,
+              p_min_version: (if $min == "" then null else $min end)}' |
+            curl --fail-with-body --silent --show-error --retry 3 \
+              -X POST "$SERVICE_URL/rest/v1/rpc/mimir_release_publish" \
+              -H "apikey: $SERVICE_KEY" -H "content-type: application/json" --data @-
+          echo
+
+          # Read it back the way every Mimir does: the publishable key alone.
+          answer=$(curl --fail-with-body --silent --show-error --retry 3 \
+            "$SERVICE_URL/rest/v1/mimir_releases?select=version,title,notes_url,min_version,published_at&channel=eq.stable" \
+            -H "apikey: $SERVICE_KEY")
+          echo "$answer"
+          if [ "$(jq -r '.[0].version // ""' <<<"$answer")" != "${TAG#v}" ]; then
+            echo "::error::The account service does not name ${TAG#v} as the current release."
+            exit 1
+          fi
