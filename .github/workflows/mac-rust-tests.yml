@@ -16,6 +16,9 @@ on:
         default: well-core
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: cargo test on macOS
