@@ -47,7 +47,7 @@ jobs:
   announce:
     name: Tell the account service
     if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Announce the release
         env:
@@ -69,7 +69,13 @@ jobs:
           esac
           # Only the newest published release: a draft, a pre-release or an
           # older release would point every Mimir at the wrong version.
-          latest=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)
+          # GitHub's "latest" can lag the published event by a little (v0.24.0's
+          # announcement failed that way), so give it up to a minute to catch up.
+          for attempt in 1 2 3 4 5 6; do
+            latest=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)
+            [ "$TAG" = "$latest" ] && break
+            [ "$attempt" -lt 6 ] && sleep 10
+          done
           if [ "$TAG" != "$latest" ]; then
             echo "::error::$TAG is not this repository's latest published release ($latest); only that one is announced."
             exit 1

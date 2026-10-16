@@ -22,10 +22,13 @@ on:
         default: well-core
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   gate:
     name: Are the Apple secrets here yet?
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       ready: ${{ steps.look.outputs.ready }}
     steps:
@@ -168,7 +171,9 @@ jobs:
 
           say "Verdict"
           if [ "$fail" -eq 0 ]; then
-            echo "The Mac build is signed${MIMIR_NOTARIZING:+ and, where secrets allow, notarized}, and its Node sidecar runs. Safe to cut a release."
+            notarized=""
+            [ "${MIMIR_NOTARIZING:-false}" = true ] && notarized=" and notarized"
+            echo "The Mac build is signed${notarized}, and its Node sidecar runs. Safe to cut a release."
           else
             echo "::error::The Mac build is NOT ready. See the numbered answers above."
           fi

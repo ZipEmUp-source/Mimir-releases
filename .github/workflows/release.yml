@@ -32,7 +32,12 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
+
+# Two runs for one tag would race each other creating and filling its draft.
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
 
 jobs:
   # Seconds on a Linux runner, before any Mac minute: the tag is well formed,
@@ -40,7 +45,7 @@ jobs:
   # source at that tag, and the changelog has something to say about it.
   preflight:
     name: Secrets, deploy key and tag are in place
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Look before a Mac minute is spent
         env:
@@ -110,6 +115,9 @@ jobs:
             target: x86_64-apple-darwin
             args: '--target x86_64-apple-darwin'
     runs-on: ${{ matrix.platform }}
+    timeout-minutes: 120
+    permissions:
+      contents: write
     steps:
       - name: Check out the private source at the tag
         uses: actions/checkout@v4
