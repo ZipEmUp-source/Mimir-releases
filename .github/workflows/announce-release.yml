@@ -13,6 +13,18 @@ name: Announce release
 #   gh workflow run announce-release.yml -R ZipEmUp-source/Mimir-releases -f tag=v0.20.0
 #   gh workflow run announce-release.yml -R ZipEmUp-source/Mimir-releases -f tag=v0.21.0 -f min_version=0.18.0
 #
+# The STORE edition (tags store-vX.Y.Z, always pre-releases; see release.yml)
+# is never announced: the account service's `mimir_releases` describes the
+# ordinary edition alone, and a store Mimir does not ask it. A published store
+# release instead has its latest.json copied to store/latest.json on this
+# repository's `updates` branch, which is the store edition's updater
+# endpoint (raw.githubusercontent.com/…/updates/store/latest.json). The
+# download URLs inside latest.json are absolute links to the release's own
+# assets, so the file works from the branch exactly as it does from the
+# release. Run that by hand for a store tag the same way:
+#
+#   gh workflow run announce-release.yml -R ZipEmUp-source/Mimir-releases -f tag=store-v0.20.0
+#
 # Secret:   MIMIR_RELEASE_TOKEN — made and set by `node scripts/release-token.mjs`
 #           in the source repo. The account service keeps only its SHA-256.
 # Variable: MIMIR_MIN_VERSION (optional) — the oldest version still fine to
@@ -27,7 +39,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Published release to announce, e.g. v0.20.0'
+        description: 'Published release to announce, e.g. v0.20.0 (store-v0.20.0: refresh the store updater file instead)'
         required: true
         type: string
       min_version:
@@ -46,7 +58,10 @@ concurrency:
 jobs:
   announce:
     name: Tell the account service
-    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
+    # Never a pre-release, and never a store tag however it was published.
+    if: >-
+      (github.event_name == 'workflow_dispatch' || !github.event.release.prerelease)
+      && !startsWith(github.event.release.tag_name || inputs.tag, 'store-v')
     runs-on: ubuntu-24.04
     steps:
       - name: Announce the release
@@ -104,3 +119,77 @@ jobs:
             echo "::error::The account service does not name ${TAG#v} as the current release."
             exit 1
           fi
+
+  # The store edition's updater reads store/latest.json on the `updates`
+  # branch (raw.githubusercontent.com never looks at a release, and the
+  # release itself may not be `latest`): when a store release is published,
+  # its latest.json is copied there. Nothing else is told.
+  store-updater:
+    name: Point the store edition's updater at this release
+    if: startsWith(github.event.release.tag_name || inputs.tag, 'store-v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Copy the release's latest.json onto the updates branch
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          case "$TAG" in
+            store-v[0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "::error::A store tag must look like store-v0.20.0, got '$TAG'."; exit 1 ;;
+          esac
+          release=$(gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json isDraft,isPrerelease,tagName)
+          if [ "$(jq -r .isDraft <<<"$release")" != "false" ]; then
+            echo "::error::$TAG is still a draft; publish it first."
+            exit 1
+          fi
+          if [ "$(jq -r .isPrerelease <<<"$release")" != "true" ]; then
+            echo "::error::$TAG is not marked as a pre-release: GitHub's 'latest' may now point the ORDINARY edition at a store build. Mark it as a pre-release before going on."
+            exit 1
+          fi
+
+          work=$(mktemp -d)
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" --pattern latest.json --dir "$work"
+          version=$(jq -r '.version // ""' "$work/latest.json")
+          if [ "$version" != "${TAG#store-v}" ]; then
+            echo "::error::latest.json on $TAG names version '$version', not '${TAG#store-v}'."
+            exit 1
+          fi
+          # Every download URL must be an absolute link into this repository's
+          # releases, or the file would not work from another address.
+          bad=$(jq -r --arg repo "$GITHUB_REPOSITORY" '.platforms[].url | select(startswith("https://github.com/\($repo)/") or startswith("https://api.github.com/repos/\($repo)/") | not)' "$work/latest.json")
+          if [ -n "$bad" ]; then
+            echo "::error::latest.json points outside this repository's releases:"; echo "$bad"
+            exit 1
+          fi
+          echo "store edition $version →"; jq -r '.platforms | to_entries[] | "  \(.key): \(.value.url)"' "$work/latest.json"
+
+          # The updates branch holds nothing but these files; it is made on
+          # its own, with no history of main, the first time it is needed.
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch origin updates 2>/dev/null; then
+            git checkout -B updates origin/updates
+          else
+            git checkout --orphan updates
+            git rm -rf --quiet . || true
+            printf '%s\n' "# Updater files" "" "The store edition of Mimir reads store/latest.json from here (raw.githubusercontent.com); announce-release.yml writes it when a store release is published. Not for hand edits." > README.md
+          fi
+          mkdir -p store
+          cp "$work/latest.json" store/latest.json
+          git add README.md store/latest.json 2>/dev/null || git add store/latest.json
+          if git diff --cached --quiet; then
+            echo "store/latest.json already names $version; nothing to push."
+            exit 0
+          fi
+          git commit -m "Store edition updater: $TAG"
+          git push origin updates
+          echo "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/updates/store/latest.json now names $version"
