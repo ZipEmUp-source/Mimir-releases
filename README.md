@@ -42,6 +42,12 @@ Mimir checks this repository for a newer published release a few seconds after i
 
 The files ending in `.sig` and the `latest.json` on each release are what the in-app installer reads. You do not need to download them.
 
+### The store edition
+
+Releases tagged `store-v…` (marked as pre-releases here) are the **store edition** of the same version: the build for a public download or an app store, without the Claude and ChatGPT plan sign-ins; it runs on Mimir credits or your own API keys. It is a separate app on your computer, installed beside an ordinary Mimir rather than over it, with its own settings, and it updates from its own channel: a store Mimir only ever sees `store-v…` releases, and an ordinary Mimir never does. Unless you were pointed at the store edition, download the release above.
+
+The `updates` branch of this repository holds the store edition's updater file (`store/latest.json`), written automatically when a store release is published. There is nothing in it to download by hand.
+
 ## Reporting a problem
 
 Use **Report a bug** in Mimir's status bar (it attaches the black-box log), or open an issue here.

@@ -8,11 +8,26 @@ name: Release
 # key, builds, uploads the installers, and is destroyed.
 #
 #   gh workflow run release.yml -R ZipEmUp-source/Mimir-releases -f tag=v0.17.0
+#   gh workflow run release.yml -R ZipEmUp-source/Mimir-releases -f tag=store-v0.17.0 -f edition=store
 #
 # The tag must already exist in ZipEmUp-source/Mimir. Review the draft here,
 # then Publish: that is the moment every installed Mimir's Tidings check sees
 # the new version. Logs are public: they show compiler output and file paths,
 # never the source, and GitHub masks every secret value.
+#
+# Two editions come out of the one source (its CLAUDE.md, "Editions"), and
+# they must never collide: an installed Mimir of one edition may never be
+# offered, or silently updated into, the other.
+#   standard — tag vX.Y.Z, a full release; it is what GitHub's `latest` names,
+#     so it is what the ordinary edition's updater endpoint
+#     (releases/latest/download/latest.json) and Tidings check find.
+#   store — tag store-vX.Y.Z (the same version's store build), built with
+#     MIMIR_EDITION=store and the merge config src-tauri/tauri.store.conf.json
+#     (its own identifier, com.wellmimir.mimir, and its own updater endpoint),
+#     and ALWAYS a pre-release, so `latest` never points at it. The store
+#     edition finds its releases by listing the `store-v` tags, and its
+#     updater reads store/latest.json on this repo's `updates` branch, which
+#     announce-release.yml fills in when the store release is published.
 #
 # Secrets on this repository:
 #   SOURCE_DEPLOY_KEY — read-only deploy key registered on the source repo.
@@ -27,12 +42,27 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag in ZipEmUp-source/Mimir to build, e.g. v0.17.0'
+        description: 'Tag in ZipEmUp-source/Mimir to build, e.g. v0.17.0 (store edition: store-v0.17.0)'
         required: true
         type: string
+      edition:
+        description: 'Which edition to build: standard (tag vX.Y.Z), or store (tag store-vX.Y.Z, MIMIR_EDITION=store, pre-release)'
+        required: false
+        type: choice
+        default: standard
+        options:
+          - standard
+          - store
 
 permissions:
   contents: read
+
+env:
+  # Both halves of the build read this one variable: vite stamps it into the
+  # window (npm run build, through tauri's beforeBuildCommand) and build.rs /
+  # edition.rs compile it into the native side. Set at the top so neither
+  # step can miss it.
+  MIMIR_EDITION: ${{ inputs.edition == 'store' && 'store' || 'standard' }}
 
 # Two runs for one tag would race each other creating and filling its draft.
 concurrency:
@@ -50,6 +80,7 @@ jobs:
       - name: Look before a Mac minute is spent
         env:
           TAG: ${{ inputs.tag }}
+          EDITION: ${{ inputs.edition || 'standard' }}
           HAS_DEPLOY_KEY: ${{ secrets.SOURCE_DEPLOY_KEY != '' }}
           HAS_SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
           HAS_SIGNING_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD != '' }}
@@ -58,10 +89,14 @@ jobs:
           HAS_APPLE_ID: ${{ secrets.APPLE_ID != '' && secrets.APPLE_PASSWORD != '' }}
           HAS_APPLE_TEAM: ${{ secrets.APPLE_TEAM_ID != '' }}
         run: |
-          case "$TAG" in
-            v[0-9]*.[0-9]*.[0-9]*) ;;
+          case "$EDITION/$TAG" in
+            standard/v[0-9]*.[0-9]*.[0-9]*) ;;
+            store/store-v[0-9]*.[0-9]*.[0-9]*) ;;
+            standard/store-v*) echo "::error::'$TAG' is a store edition tag; pass -f edition=store to build it."; exit 1 ;;
+            store/*) echo "::error::A store edition tag must look like store-v0.17.0, got '$TAG'."; exit 1 ;;
             *) echo "::error::The tag must look like v0.17.0, got '$TAG'."; exit 1 ;;
           esac
+          echo "Building the $EDITION edition from $TAG"
           if [ "$HAS_DEPLOY_KEY" != "true" ]; then
             echo "::error::SOURCE_DEPLOY_KEY is not set on this repository, so the source cannot be checked out."
             exit 1
@@ -95,9 +130,24 @@ jobs:
         env:
           TAG: ${{ inputs.tag }}
         run: |
+          # release-notes.mjs reads either edition's tag: store-v0.17.0 names
+          # the same section as v0.17.0.
           title=$(node scripts/release-notes.mjs "$TAG" --title)
           echo "release title: ${title:-(none; the body will say so)}"
           node scripts/release-notes.mjs "$TAG" | head -3
+
+      - name: The store edition's merge config is there
+        if: inputs.edition == 'store'
+        run: |
+          node -e '
+            const c = JSON.parse(require("fs").readFileSync("src-tauri/tauri.store.conf.json", "utf8"));
+            const base = JSON.parse(require("fs").readFileSync("src-tauri/tauri.conf.json", "utf8"));
+            if (!c.identifier || c.identifier === base.identifier) throw new Error("the store edition must have its own identifier");
+            const endpoints = c.plugins?.updater?.endpoints ?? [];
+            if (endpoints.length !== 1 || !endpoints[0].includes("/updates/store/latest.json")) throw new Error("the store edition must read store/latest.json on the updates branch");
+            if (c.plugins?.updater?.pubkey) throw new Error("the merge config must not touch the updater pubkey");
+            console.log("store edition:", c.identifier, "→", endpoints[0]);
+          '
 
   build:
     needs: preflight
@@ -141,6 +191,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          # The edition is compiled in (rerun-if-env-changed), so each keeps
+          # its own cache rather than invalidating the other's.
+          key: ${{ inputs.edition || 'standard' }}
 
       - run: npm ci
 
@@ -156,6 +209,8 @@ jobs:
         run: |
           {
             echo "title=$(node scripts/release-notes.mjs "$TAG" --title)"
+            # v0.17.0 or store-v0.17.0 → 0.17.0
+            bare="${TAG#store-}"; echo "version=${bare#v}"
             echo 'body<<MIMIR_NOTES_EOF'
             node scripts/release-notes.mjs "$TAG"
             echo 'MIMIR_NOTES_EOF'
@@ -202,8 +257,17 @@ jobs:
           # on publish, from this branch.
           releaseCommitish: main
           tagName: ${{ inputs.tag }}
-          releaseName: ${{ format('Mimir {0}{1}', inputs.tag, steps.notes.outputs.title != '' && format(' — {0}', steps.notes.outputs.title) || '') }}
+          # "Mimir v0.17.0 — Title", or "Mimir v0.17.0 — Title (store edition)"
+          # for the store build of the same version (the version is the tag
+          # without its store- prefix).
+          releaseName: ${{ format('Mimir {0}{1}{2}', inputs.edition == 'store' && format('v{0}', steps.notes.outputs.version) || inputs.tag, steps.notes.outputs.title != '' && format(' — {0}', steps.notes.outputs.title) || '', inputs.edition == 'store' && ' (store edition)' || '') }}
           releaseBody: ${{ steps.notes.outputs.body }}
           releaseDraft: true
-          prerelease: false
-          args: ${{ matrix.args }}
+          # A store release is ALWAYS a pre-release: GitHub's `latest` skips
+          # pre-releases, so the ordinary edition's updater endpoint and
+          # Tidings check can never land on a store build.
+          prerelease: ${{ inputs.edition == 'store' }}
+          # The store edition is built with its merge config on top of
+          # tauri.conf.json: its own identifier and updater endpoint, the same
+          # product name and the same updater pubkey.
+          args: ${{ format('{0}{1}', matrix.args, inputs.edition == 'store' && ' --config src-tauri/tauri.store.conf.json' || '') }}
