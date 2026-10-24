@@ -1,35 +1,35 @@
 {
-  "version": "0.29.1",
-  "notes": "### Fixed\n- **Round-table agents no longer time out before they speak** — a round table starts every seat at once, and each mirror had only 30 seconds to come up and accept its turn (Codex: 20 seconds to start, then 30 for its thread). With several CLIs launching side by side, and Windows scanning each one as it starts, seats failed with \"timed out waiting for initialize\" or \"thread/start\" without saying a word. They now get two minutes to start, the same patience the main Codex lane has, and if one still does not come up the message says it never started.",
-  "pub_date": "2026-10-24T14:13:33.783Z",
+  "version": "0.29.2",
+  "notes": "### Fixed\n- **Each phone keeps its own \"Call me by\" name** — the name, standing instructions and swearing setting on Mimir Mobile's Identity screen now belong to the phone that saved them, so two phones signed in to the same Tailscale account, or two people sharing one, each keep the name they set. A phone message in a desktop chat, and in other phones' chats, now shows that phone's chosen name. A phone that has not saved one yet starts from what it had before.",
+  "pub_date": "2026-10-24T15:02:44.735Z",
   "platforms": {
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjl0azVGYnlKTzBJV0VTUWl2aDZYSmlZdEQ5aDBoS0VydWZTUHdTVDJtMnJwOFQrK1JUSmwrY3VvcVVKOGQrVFVhak83VEpNVU9tK2ZIKzZMV2dFT3dzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODUxMDIzCWZpbGU6TWltaXIuYXBwLnRhci5negp4VkJPTzJpLy9zOWQ1TTBma2lQREhtTHYzczJxbVVkR3JySEkvS25reFhJZ1hObldSNFNNZTgxYi9xNEozZis4YnRhSzhhSzV4Q2lOM0RWcXd4QzhBQT09Cg==",
-      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/672431673"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjhhZDFlZGFhUGtiV05Ga0hhSFdqUldhTzcxWGZCTjg0ck0ydjBaaTNIQldqTTR4dTdiRnlYcXo5dndRR0NPT1Y4VVNGb1ZEdmt6SVdnNGFyMmdJZHd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODUzOTQ3CWZpbGU6TWltaXIuYXBwLnRhci5negpieDlSazBNWXhQRlBQSjJyVVNQSUpxdVNaZWxZSkFyS01zak5ZSDhOaXBST3ptR0hMQlQzdXNkdFR1K3ZlcnZxKy9QQ0xPNVV3L1lCS2E2eUtlc05BUT09Cg==",
+      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/672542529"
     },
     "darwin-aarch64-app": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjl0azVGYnlKTzBJV0VTUWl2aDZYSmlZdEQ5aDBoS0VydWZTUHdTVDJtMnJwOFQrK1JUSmwrY3VvcVVKOGQrVFVhak83VEpNVU9tK2ZIKzZMV2dFT3dzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODUxMDIzCWZpbGU6TWltaXIuYXBwLnRhci5negp4VkJPTzJpLy9zOWQ1TTBma2lQREhtTHYzczJxbVVkR3JySEkvS25reFhJZ1hObldSNFNNZTgxYi9xNEozZis4YnRhSzhhSzV4Q2lOM0RWcXd4QzhBQT09Cg==",
-      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/672431673"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjhhZDFlZGFhUGtiV05Ga0hhSFdqUldhTzcxWGZCTjg0ck0ydjBaaTNIQldqTTR4dTdiRnlYcXo5dndRR0NPT1Y4VVNGb1ZEdmt6SVdnNGFyMmdJZHd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODUzOTQ3CWZpbGU6TWltaXIuYXBwLnRhci5negpieDlSazBNWXhQRlBQSjJyVVNQSUpxdVNaZWxZSkFyS01zak5ZSDhOaXBST3ptR0hMQlQzdXNkdFR1K3ZlcnZxKy9QQ0xPNVV3L1lCS2E2eUtlc05BUT09Cg==",
+      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/672542529"
     },
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjAxcWQvRHJ4ekJDa0VBRkJVMW5RWE14L0V0Vmo5SkNud2lPSVdyYjk4bm9VeHJPcU5lVXFoVnFvNDIxLzB3QkdiZGF4MEV3TGZlajRnSUQwM3kybndrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODUxMTA3CWZpbGU6TWltaXJfMC4yOS4xX3g2NC1zZXR1cC5leGUKZHNRajJ2TFBzOFBXYUUzZlg2ak83TlZWU2VlUU56eEdTSnRPeGk0d3YyMmZRR3RoMzNkOTBnNUpveVRvdTAxeWtNYUkxQStiM0hsL0o3UlpmNTIwRGc9PQo=",
-      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/672435537"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjNFSGlxMGtZaXNRNVY2MEhleWhSNVpwWXh5ZzVDNzhTWE13YXRoZUc4R1hKV2ZGVmpRTUdZVVBLSXI2Q09CUTUydXAwNG5kRDlRZ1pRNi9ETjhYWndJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODUzOTYzCWZpbGU6TWltaXJfMC4yOS4yX3g2NC1zZXR1cC5leGUKanZSaEt0c0M1emxTSWR5bi8xQmZoTzJGZURYYVd4OTBHNnA4YldBQXpPM21tYXQ4amVCN2J2MUtodWFUVHdSWDVadmlQZ0ZUMGVMbE1zSXpYWnRoQUE9PQo=",
+      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/672543218"
     },
     "windows-x86_64-nsis": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjAxcWQvRHJ4ekJDa0VBRkJVMW5RWE14L0V0Vmo5SkNud2lPSVdyYjk4bm9VeHJPcU5lVXFoVnFvNDIxLzB3QkdiZGF4MEV3TGZlajRnSUQwM3kybndrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODUxMTA3CWZpbGU6TWltaXJfMC4yOS4xX3g2NC1zZXR1cC5leGUKZHNRajJ2TFBzOFBXYUUzZlg2ak83TlZWU2VlUU56eEdTSnRPeGk0d3YyMmZRR3RoMzNkOTBnNUpveVRvdTAxeWtNYUkxQStiM0hsL0o3UlpmNTIwRGc9PQo=",
-      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/672435537"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjNFSGlxMGtZaXNRNVY2MEhleWhSNVpwWXh5ZzVDNzhTWE13YXRoZUc4R1hKV2ZGVmpRTUdZVVBLSXI2Q09CUTUydXAwNG5kRDlRZ1pRNi9ETjhYWndJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODUzOTYzCWZpbGU6TWltaXJfMC4yOS4yX3g2NC1zZXR1cC5leGUKanZSaEt0c0M1emxTSWR5bi8xQmZoTzJGZURYYVd4OTBHNnA4YldBQXpPM21tYXQ4amVCN2J2MUtodWFUVHdSWDVadmlQZ0ZUMGVMbE1zSXpYWnRoQUE9PQo=",
+      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/672543218"
     },
     "windows-x86_64-msi": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjJJZVpHdTRvaWpMRVkwQTlVUlZXME9QTmhiSnY3OUk0VTZ4S3ZNTHRsNmliRWJITmVaajBDQ25rUEhtdnVsWFY4Z29lRGFGRWt6TW1OaUVQS0dHOUFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODUxMTA3CWZpbGU6TWltaXJfMC4yOS4xX3g2NF9lbi1VUy5tc2kKOFpIZmticS9SbWYzUTFvLzBQaEdqNGtxZGlHNHQ5cWlTeVZwWUZyMzNmN2NXMmh4VnNoOWQ3b3dLdXN0L1BZSE9sU1Bjb2ZwZC9iNXpDcGhtRmg5Q3c9PQo=",
-      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/672435415"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVi82ZDB6MDlXejZzVFdKd0JmNytwUk83eEluV2x3empkcFM4NmpWR3JTT0ZuSTd5bDVIVEdTRjlZQWpVVWdLQ1hOdzdaUHNra1pwTG1nZ1JxbE9tR0FnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODUzOTYzCWZpbGU6TWltaXJfMC4yOS4yX3g2NF9lbi1VUy5tc2kKbEVRUXlQTlQyZXc5UTRTQWxFOCtmSFNNN3NTWFlEYnNBMkdvVERpb3NJUTdKQlZWVkxXNHZaSEc2eGZaTmtnblRJTWVvaDVBZHlWdUlGOXZ3aGFLQnc9PQo=",
+      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/672543089"
     },
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVno3N3FqUFlnRmgxbm1iRnVSY2VESy9JNituTkh5eUVXZERuak91aUxMVkJnd1dHcVFhb0I1ZUdWSUtkdTFzM1pLRVhkZ0dyZ1g5VEU3MWUvUFFXb2dBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODUxMjA1CWZpbGU6TWltaXIuYXBwLnRhci5negpUb1RhaWtQZmI4emJEeGl1S2Rzd2oyaHdRamJ5ZEpGMnFMZnRiZUw2cXd1S0NJU2svVnlCTlpVV1ZFeHBwc2o4NkRWSkhrK21rSzAxdDU5K3FabXpCUT09Cg==",
-      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/672439250"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjJYQ0s2aXQrODdaS2h2WlJLbjBoekRFUEdDb0hjVzhUMTk1RWN4T0x4RHBKR3pyTTM3aGJOYnRUZlZjUlVTeURUTmZQRkNEU1NsMXZuYVJzdFBWREFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODU0MTU3CWZpbGU6TWltaXIuYXBwLnRhci5negpQczRJVDVrMEw1WndTNXVISUFSVzZMeFFRVmlvYWZUdmczUW5mTEVHM0V0TExyWnZ6YktpcG4wRU9PTytZZmllWDdXeFJXSlFQQUNqR2c5U0JEOWxEZz09Cg==",
+      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/672550723"
     },
     "darwin-x86_64-app": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVno3N3FqUFlnRmgxbm1iRnVSY2VESy9JNituTkh5eUVXZERuak91aUxMVkJnd1dHcVFhb0I1ZUdWSUtkdTFzM1pLRVhkZ0dyZ1g5VEU3MWUvUFFXb2dBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODUxMjA1CWZpbGU6TWltaXIuYXBwLnRhci5negpUb1RhaWtQZmI4emJEeGl1S2Rzd2oyaHdRamJ5ZEpGMnFMZnRiZUw2cXd1S0NJU2svVnlCTlpVV1ZFeHBwc2o4NkRWSkhrK21rSzAxdDU5K3FabXpCUT09Cg==",
-      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/672439250"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjJYQ0s2aXQrODdaS2h2WlJLbjBoekRFUEdDb0hjVzhUMTk1RWN4T0x4RHBKR3pyTTM3aGJOYnRUZlZjUlVTeURUTmZQRkNEU1NsMXZuYVJzdFBWREFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODU0MTU3CWZpbGU6TWltaXIuYXBwLnRhci5negpQczRJVDVrMEw1WndTNXVISUFSVzZMeFFRVmlvYWZUdmczUW5mTEVHM0V0TExyWnZ6YktpcG4wRU9PTytZZmllWDdXeFJXSlFQQUNqR2c5U0JEOWxEZz09Cg==",
+      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/672550723"
     }
   }
 }
