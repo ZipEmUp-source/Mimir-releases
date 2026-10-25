@@ -1,35 +1,35 @@
 {
-  "version": "0.32.0",
-  "notes": "### A GIF button, like Messages\n\n- **GIFs from a drawer, not a pasted link.** A GIF button sits beside the message box on the desktop and on the phone: type a word, see the GIFs, tap one and it is sent, with whatever words were in the box. The search runs on GIPHY with a free key of your own, pasted once under Settings → General → GIFs on the PC. The key stays in the protected store and the search runs in Mimir itself, for the window and for your phones alike; a phone never sees it. A GIF sent from the drawer shows as the picture alone, and agents read it (with its frames) as before.\n- **Paste the GIPHY key from your phone.** Mimir Mobile's Settings → Desktop has a GIPHY key field: the key goes over the link to desktop Mimir, which files it in its protected store exactly as Settings would, so the drawer can be set up when nobody is at the PC.\n\n### Fixed\n- **A run stopped before it started no longer says \"Waiting for the desktop\"** — Activity on the phone showed the queue line under Stopped; the link now says \"Stopped before it started\", and the phone says the same for an older desktop.",
-  "pub_date": "2026-10-24T20:11:44.939Z",
+  "version": "0.32.1",
+  "notes": "### Agents send GIFs that pop up\n\n- **An agent's GIF shows as a picture, like yours.** When an agent puts a GIF address in its reply, as an image, a link or the bare address, the GIF is fetched into the chat and pops up in its bubble on the phone and in the window, with the words beside it kept and the link gone; an address that could not be fetched stays a link.\n- **Agents can search for a GIF.** On the phone link, every agent has a `gif_search` tool: a few words in, real GIPHY addresses out, searched by desktop Mimir with the key you pasted (the key never reaches the agent). The Well engine and the Claude and Codex lanes all have it; Kimi, Gemini and Ares do not.\n\n### Fixed\n\n- **A message resent into a mission's chat is taken once.** When a phone lost the answer to a message it wrote in a mission's chat and sent it again under the same request, the change of direction was filed twice. The link now remembers the request and answers the resend with the change it already took (a different message under the same request is refused, as in every other chat).",
+  "pub_date": "2026-10-24T22:55:57.392Z",
   "platforms": {
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVnlmL1RhRFltVnFRWE9zZTVyVzFwbzIxM1R6RHNKcTdkTU8vVjU1QzdxQU15QnY4dE12MkpZclVuMDFoYjE2MHJiWjNIeWtxbHgwTCtCOUV5SGZhV0FnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODcyNDcyCWZpbGU6TWltaXIuYXBwLnRhci5negpqMW12Wm05MDA4WG5sZXpDMkZyWTRWTWpvSnoySTF0ZWZCTloydExWaThFWDNIRFpabllTNFRYQmtzb0txbWszSFB3b0VXRGFMUjdabzFmRnQ5UlZBQT09Cg==",
-      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/673193072"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVndXQkFNbEJVa0U4eFlZVGlHK2RLWlNzenFXMDRPdCtpNW5hYzJXZVYvNExRU2RPMTVNVXQ2RkdEUWcxTkppMXhvNWN4Q2RGUjhHbnRBQ3JTZGVoWXdBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODgyMzk2CWZpbGU6TWltaXIuYXBwLnRhci5negpPbTN5Tk1FSDlScXNwSG9seUNUbFpSZHFxRWw0MEZXNnUxS1dyQ3FxNjFNS0d6aS90dXZZQlZSSFpFVTV3T3hMZG1KbXRxSEV4bzN4T2lSWmY2V21EZz09Cg==",
+      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/673514277"
     },
     "darwin-aarch64-app": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVnlmL1RhRFltVnFRWE9zZTVyVzFwbzIxM1R6RHNKcTdkTU8vVjU1QzdxQU15QnY4dE12MkpZclVuMDFoYjE2MHJiWjNIeWtxbHgwTCtCOUV5SGZhV0FnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODcyNDcyCWZpbGU6TWltaXIuYXBwLnRhci5negpqMW12Wm05MDA4WG5sZXpDMkZyWTRWTWpvSnoySTF0ZWZCTloydExWaThFWDNIRFpabllTNFRYQmtzb0txbWszSFB3b0VXRGFMUjdabzFmRnQ5UlZBQT09Cg==",
-      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/673193072"
-    },
-    "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjEwWEdTdllaTFpHOTRzbHNYWk1TNnloTXFCY0hUNkE4M2FIaG1rT29ndmsvRTlmVWJqZnFCbFJJSFJtYzNNWG9USFYyVk9KVjVxbEpqMHFMUzZCUmdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODcyNjQxCWZpbGU6TWltaXIuYXBwLnRhci5negoyaHdEL3JqRXRrL0V0SEhDdlMvb3AyOURSYUpJR2VTbGRRcHgvOS90UjNGN0FtT3JhZytyWEpDZWZMSjhyRUtRcERQaDIyanMvczRBM0dEWGpLMjJEdz09Cg==",
-      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/673198459"
-    },
-    "darwin-x86_64-app": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjEwWEdTdllaTFpHOTRzbHNYWk1TNnloTXFCY0hUNkE4M2FIaG1rT29ndmsvRTlmVWJqZnFCbFJJSFJtYzNNWG9USFYyVk9KVjVxbEpqMHFMUzZCUmdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODcyNjQxCWZpbGU6TWltaXIuYXBwLnRhci5negoyaHdEL3JqRXRrL0V0SEhDdlMvb3AyOURSYUpJR2VTbGRRcHgvOS90UjNGN0FtT3JhZytyWEpDZWZMSjhyRUtRcERQaDIyanMvczRBM0dEWGpLMjJEdz09Cg==",
-      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/673198459"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVndXQkFNbEJVa0U4eFlZVGlHK2RLWlNzenFXMDRPdCtpNW5hYzJXZVYvNExRU2RPMTVNVXQ2RkdEUWcxTkppMXhvNWN4Q2RGUjhHbnRBQ3JTZGVoWXdBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODgyMzk2CWZpbGU6TWltaXIuYXBwLnRhci5negpPbTN5Tk1FSDlScXNwSG9seUNUbFpSZHFxRWw0MEZXNnUxS1dyQ3FxNjFNS0d6aS90dXZZQlZSSFpFVTV3T3hMZG1KbXRxSEV4bzN4T2lSWmY2V21EZz09Cg==",
+      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/673514277"
     },
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVitPbnJQMlB5YUxIdHNyWWl1L1ZRNDhCNHdzTEVOc1lhSFpnOGNzbEg0d3ExNytRb1BpOFlQT2V5MzhCdDU4OGNkWU5MK0dWdVBlRmwwc3dFYnpxNGdjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODcyNjk5CWZpbGU6TWltaXJfMC4zMi4wX3g2NC1zZXR1cC5leGUKY3NQSWh4NWFkakMydmRrRkp0NmdLVDVubHMzZkxaeDluN0VnNHhzUHVvVlZNaFMxTnNHYU0vdlpJMzdaNGRRNHQrUXlKM0pvbHhra21JemxZQ3BoRHc9PQo=",
-      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/673200316"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjVSSUJkd2h3N0JLYUpyTU1GNEFsRU01SWg1b0p1K3RKSHZOSVF2S0NrbUhUQ0NxVGFsRUNaejdKbUJmWlcyeFY2ajBmSWlJWmE5dVFyS2p3SG1wWWdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODgyNDY2CWZpbGU6TWltaXJfMC4zMi4xX3g2NC1zZXR1cC5leGUKUjZvYks1MEEzRGZvRjNycUVkemF6MTkzenZhSDJoUHE3TE5YM29LTDhKUXcyWWJwcDZDTzMrM0JoMlVKRWIxTDJTRWFHZEgrRnViUHl5VFMxY1NOQWc9PQo=",
+      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/673516162"
     },
     "windows-x86_64-nsis": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVitPbnJQMlB5YUxIdHNyWWl1L1ZRNDhCNHdzTEVOc1lhSFpnOGNzbEg0d3ExNytRb1BpOFlQT2V5MzhCdDU4OGNkWU5MK0dWdVBlRmwwc3dFYnpxNGdjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODcyNjk5CWZpbGU6TWltaXJfMC4zMi4wX3g2NC1zZXR1cC5leGUKY3NQSWh4NWFkakMydmRrRkp0NmdLVDVubHMzZkxaeDluN0VnNHhzUHVvVlZNaFMxTnNHYU0vdlpJMzdaNGRRNHQrUXlKM0pvbHhra21JemxZQ3BoRHc9PQo=",
-      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/673200316"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjVSSUJkd2h3N0JLYUpyTU1GNEFsRU01SWg1b0p1K3RKSHZOSVF2S0NrbUhUQ0NxVGFsRUNaejdKbUJmWlcyeFY2ajBmSWlJWmE5dVFyS2p3SG1wWWdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODgyNDY2CWZpbGU6TWltaXJfMC4zMi4xX3g2NC1zZXR1cC5leGUKUjZvYks1MEEzRGZvRjNycUVkemF6MTkzenZhSDJoUHE3TE5YM29LTDhKUXcyWWJwcDZDTzMrM0JoMlVKRWIxTDJTRWFHZEgrRnViUHl5VFMxY1NOQWc9PQo=",
+      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/673516162"
     },
     "windows-x86_64-msi": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjdnUkFZYmNkYW1lZFU2Q2dYVXRRaTU1RXlUcUhCbGcyQzh1TFJISm9RekJQSU03bVJabUFOQ1VSWkNoMjcrOC9RMHRXQWx4NlBIcGhxWUhoYkI4YUFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODcyNjk5CWZpbGU6TWltaXJfMC4zMi4wX3g2NF9lbi1VUy5tc2kKZGJ3cHQ5Y0VRejlnb04wTytlaTZ6eHlHZWxmQXhEbUZsWC9IR0dkbFZDL1Z5VnFoeTJpNkREbm1wdlBzMnJVdERrZGJhMU1aR1dFNENESEhva2VDQ0E9PQo=",
-      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/673200231"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjRMcXFzdEhqRUhoTmRNc2hEUUhnZktmcmJWYXFUeGFqRllkUXRUenFpRW54Y255ZTl6WXNvRm1VdDVxY1VkTnRCSlo4WWxQc0ZjcUw2N3lIOUwxdWdJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODgyNDY2CWZpbGU6TWltaXJfMC4zMi4xX3g2NF9lbi1VUy5tc2kKNG15QldmVnd2YlZLaHIxVk10TVB1cGpCS0xHUUNtR2xYalZDL3J0SzdFY1ZTRUw1czhXMjZSak1vdmw2WlYvb3VtdjQ0bWRKWk0wbkxTSzB6QlBRQlE9PQo=",
+      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/673516083"
+    },
+    "darwin-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjZkRUh1QnVNaHFrcTdwbzNxVmdxNk9CM0N6SjVSN3BmdG14TEVCNHdzL1gvdzF3ZXB5UEVxYjZnbGVIS1BEQVk4N3FUWFZKOVZ1eEp6VENxekJ5SFFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODgyNTUwCWZpbGU6TWltaXIuYXBwLnRhci5negpNcDd4ck9KUTQxbjJuV2N3ZXRoTnFSZkpiK0dwOTM1T2pBaHhwcXFFVVVTakJiUnlzc1UwSnQ0bGhvOG5IT0dueVptZzJsbWdJdHVDRlVGVlFvTjREQT09Cg==",
+      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/673518615"
+    },
+    "darwin-x86_64-app": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQ2JYMEx5SThwVjZkRUh1QnVNaHFrcTdwbzNxVmdxNk9CM0N6SjVSN3BmdG14TEVCNHdzL1gvdzF3ZXB5UEVxYjZnbGVIS1BEQVk4N3FUWFZKOVZ1eEp6VENxekJ5SFFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODgyNTUwCWZpbGU6TWltaXIuYXBwLnRhci5negpNcDd4ck9KUTQxbjJuV2N3ZXRoTnFSZkpiK0dwOTM1T2pBaHhwcXFFVVVTakJiUnlzc1UwSnQ0bGhvOG5IT0dueVptZzJsbWdJdHVDRlVGVlFvTjREQT09Cg==",
+      "url": "https://api.github.com/repos/ZipEmUp-source/Mimir-releases/releases/assets/673518615"
     }
   }
 }
